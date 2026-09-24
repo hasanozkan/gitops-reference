@@ -84,6 +84,7 @@ milliseconds, so every request recorded in seconds landed in the first bucket.
 The advised boundaries now live in the telemetry contracts, and the services'
 tests compare them — p95 reads ~5 ms. Unit tests could not have caught it;
 an alert evaluated on real data did.
+[The full story](docs/field-notes/the-4-75-second-p95.md).
 
 ## Layout
 
