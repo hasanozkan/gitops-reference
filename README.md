@@ -37,6 +37,8 @@ Needs Docker, [k3d](https://k3d.io), the [flux](https://fluxcd.io/flux/installat
 make up        # k3d cluster + Flux, reconciled from this repo's main branch
 make smoke     # borrow a book through the deployed API, check the catalog follows
 make status    # flux get all -A
+kubectl -n library scale deploy/library --replicas=0   # drift...
+flux reconcile kustomization apps                      # ...corrected from Git
 make down
 ```
 

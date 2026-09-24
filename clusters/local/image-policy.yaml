@@ -3,7 +3,7 @@
 # (via the `$imagepolicy` marker in apps/base/library/deployment.yaml). The cluster
 # then reconciles that commit like any other change — the deploy is a Git
 # commit you can read, review and revert.
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
   name: library
@@ -12,7 +12,7 @@ spec:
   image: ghcr.io/hasanozkan/library-sample
   interval: 5m
 ---
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: library
