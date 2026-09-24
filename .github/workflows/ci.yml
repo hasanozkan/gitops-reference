@@ -16,7 +16,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: fluxcd/flux2/action@main
       - name: Install kubeconform (kustomize ships with the runner)
         run: |
@@ -31,7 +31,7 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: helm/kind-action@v1
       - uses: fluxcd/flux2/action@main
       - run: flux install --components-extra=image-reflector-controller,image-automation-controller
