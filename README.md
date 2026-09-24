@@ -48,6 +48,27 @@ loop, fork this repository and run
 `GITOPS_REPO=https://github.com/<you>/gitops-reference GITHUB_TOKEN=<token with contents:write> make up`:
 new images now arrive as `chore(image): … -> …` commits in your fork.
 
+## Observability
+
+`make up` also installs a laptop-sized stack — Prometheus, Alertmanager,
+Grafana, Loki (logs via Alloy) and Tempo (traces) — and `make traffic` gives
+it something to show. `make grafana` opens two dashboards that live in
+[`observability/dashboards/`](observability/dashboards) as JSON:
+
+- **Library** — request rate and p95 by route, 5xx ratio, loans opened and
+  closed, late fees, refusals by code, and the pods' logs from Loki.
+- **Assistant** — tokens and p95 latency by model, spend, suspicious proposals
+  and injection flags, tool calls by outcome, escalations, fallbacks, budget
+  stops — the metrics from its [telemetry contract](https://github.com/hasanozkan/llm-tool-calling-assistant/blob/main/observability/telemetry.yaml).
+
+Each app declares its `ServiceMonitor` and `PrometheusRule`. CI checks the
+whole thing without a cluster ([ADR-0004](docs/adr/0004-observability-as-code.md)):
+every series **and label** a panel or alert queries must exist in a service's
+telemetry contract (`scripts/check_queries.py` — a dashboard on a renamed
+metric fails the build, verified), the assistant's rules must equal its
+repository's (`scripts/alerts_mirror.py --check`), and every rule is
+unit-tested with `promtool`.
+
 ## Layout
 
 | Path | What it holds |
@@ -55,15 +76,18 @@ new images now arrive as `chore(image): … -> …` commits in your fork.
 | [`clusters/local/sync.yaml`](clusters/local/sync.yaml) | The entry point: Git source → `infrastructure` → `apps` |
 | [`clusters/local/image-policy.yaml`](clusters/local/image-policy.yaml) | Registry scan + "newest `main-<ts>-<sha>`" policy |
 | [`clusters/local/image-update.yaml`](clusters/local/image-update.yaml) | Write-back: new tags committed to Git |
-| [`infrastructure/`](infrastructure) | Namespace with `restricted` Pod Security, default-deny network policy |
-| [`apps/base/library/`](apps/base/library) | Hardened Deployment (with the `$imagepolicy` setter) and Service |
+| [`clusters/local/observability.yaml`](clusters/local/observability.yaml) | The observability stack, as its own Kustomization (local only) |
+| [`infrastructure/`](infrastructure) | Namespace with `restricted` Pod Security, default-deny network policy, Helm sources, Prometheus Operator CRDs |
+| [`apps/base/`](apps/base) | The library and the assistant: hardened Deployments (with `$imagepolicy` setters), Services, ServiceMonitors, PrometheusRules |
+| [`observability/`](observability) | kube-prometheus-stack, Loki, Tempo, Alloy (HelmReleases), dashboards as JSON, alert tests |
 | [`apps/local/`](apps/local), [`apps/production/`](apps/production) | Overlays: local ingress · production replicas, spread and disruption budget |
 
 ## What CI proves
 
 | Job | Proves |
 |---|---|
-| `validate` | Every overlay and the cluster entry point render, and pass strict schema validation (Kubernetes + Flux CRDs) |
+| `validate` | Every overlay and the cluster entry point render, and pass strict schema validation (Kubernetes, Flux and Prometheus Operator CRDs) |
+| `observability` | Dashboards and alerts query only contract series and labels; the assistant's alert mirror is current; every rule passes its promtool tests |
 | `e2e` | On a fresh kind cluster, Flux reconciles **this commit**; `infrastructure` then `apps` become Ready; the service passes the smoke test through its Service; the image policy resolves a tag from the registry |
 
 ## Decisions

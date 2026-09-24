@@ -18,8 +18,11 @@ loki:
           period: 24h
 singleBinary:
   replicas: 1
+  # Loki needs a writable /var/loki (its root filesystem is read-only); k3d's
+  # local-path provisioner backs this small volume.
   persistence:
-    enabled: false
+    enabled: true
+    size: 2Gi
 backend:
   replicas: 0
 read:
