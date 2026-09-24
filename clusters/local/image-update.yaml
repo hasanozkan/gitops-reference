@@ -1,0 +1,27 @@
+# Writing back needs a Git credential; `make up` applies this object only when
+# GITHUB_TOKEN is set (see README). Without it the policy still resolves and
+# `flux get images policy library` shows what would be deployed.
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageUpdateAutomation
+metadata:
+  name: library
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: gitops-reference
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: flux-image-automation
+        email: flux@users.noreply.github.com
+      messageTemplate: "chore(image): {{range .Changed.Changes}}{{.OldValue}} -> {{.NewValue}} {{end}}"
+    push:
+      branch: main
+  update:
+    path: ./apps
+    strategy: Setters

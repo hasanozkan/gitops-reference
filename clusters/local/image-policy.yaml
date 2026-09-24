@@ -1,0 +1,28 @@
+# Merge = deploy. CI publishes main-<unix-ts>-<sha>; Flux scans the registry,
+# picks the newest by timestamp, and commits the new tag back to this repo
+# (via the `$imagepolicy` marker in apps/base/library/deployment.yaml). The cluster
+# then reconciles that commit like any other change — the deploy is a Git
+# commit you can read, review and revert.
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: library
+  namespace: flux-system
+spec:
+  image: ghcr.io/hasanozkan/library-sample
+  interval: 5m
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: library
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: library
+  filterTags:
+    pattern: '^main-(?P<ts>[0-9]+)-[a-f0-9]+$'
+    extract: '$ts'
+  policy:
+    numerical:
+      order: asc

@@ -1,0 +1,46 @@
+# The cluster's entry point: one Git source, two Kustomizations, applied in
+# order. Everything else in this repository is reached from here.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: gitops-reference
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/hasanozkan/gitops-reference
+  ref:
+    branch: main
+---
+# Platform first: namespaces and network policy exist before any app lands.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./infrastructure
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: gitops-reference
+---
+# Apps after the platform. `wait` + health checks make "Ready" mean the
+# Deployment is actually serving, not just that the YAML was accepted.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infrastructure
+  interval: 10m
+  path: ./apps/local
+  prune: true
+  wait: true
+  timeout: 3m
+  sourceRef:
+    kind: GitRepository
+    name: gitops-reference

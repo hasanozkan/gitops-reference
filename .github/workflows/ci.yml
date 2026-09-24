@@ -1,0 +1,55 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: fluxcd/flux2/action@main
+      - name: Install kubeconform and kustomize
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin kubeconform
+          curl -sSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- 5.8.1 /usr/local/bin
+      - run: ./scripts/validate.sh
+
+  # The real thing on a throwaway cluster: Flux reconciles THIS commit, the
+  # apps become Ready in dependency order, the service passes a smoke test,
+  # and the image policy resolves a tag from the registry.
+  e2e:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+      - uses: fluxcd/flux2/action@main
+      - run: flux install --components-extra=image-reflector-controller,image-automation-controller
+      - name: Reconcile this commit
+        run: |
+          sed "s#branch: main#commit: ${{ github.event.pull_request.head.sha || github.sha }}#" clusters/local/sync.yaml \
+            | sed "s#https://github.com/hasanozkan/gitops-reference#https://github.com/${{ github.repository }}#" \
+            | kubectl apply -f -
+          kubectl apply -f clusters/local/image-policy.yaml
+          kubectl -n flux-system wait kustomization/infrastructure kustomization/apps --for=condition=Ready --timeout=5m
+          flux get kustomizations
+      - name: Smoke test through the Service
+        run: |
+          kubectl -n library port-forward svc/library 8080:80 >/dev/null 2>&1 &
+          sleep 3
+          ./scripts/smoke.sh http://localhost:8080
+      - name: Image policy resolves the newest main-<ts>-<sha>
+        run: |
+          kubectl -n flux-system wait imagepolicy/library --for=condition=Ready --timeout=3m
+          flux get images policy library
+      - name: Diagnostics
+        if: failure()
+        run: |
+          flux get all -A || true
+          kubectl -n library get pods,events || true
+          kubectl -n flux-system logs deploy/kustomize-controller --tail=50 || true

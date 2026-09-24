@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library
+  labels:
+    app.kubernetes.io/name: library
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: library
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: library
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: library
+          image: ghcr.io/hasanozkan/library-sample:main-1790254645-1634019 # {"$imagepolicy": "flux-system:library"}
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 15
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {memory: 192Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
