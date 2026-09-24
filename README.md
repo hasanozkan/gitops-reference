@@ -9,7 +9,7 @@ workloads — and **a merge to `main` in the application repository becomes a
 deploy through a commit here**.
 
 The service is the library API from
-[spec-driven-ddd-sample](https://github.com/hasanozkan/spec-driven-ddd-sample),
+[spec-driven-ddd-python](https://github.com/hasanozkan/spec-driven-ddd-python),
 published to `ghcr.io/hasanozkan/library-sample` on every merge.
 
 ```mermaid
@@ -82,7 +82,7 @@ and more environments as more `clusters/<name>` entry points over the same
 
 ---
 
-Part of a set: [spec-driven-ddd-sample](https://github.com/hasanozkan/spec-driven-ddd-sample)
+Part of a set: [spec-driven-ddd-python](https://github.com/hasanozkan/spec-driven-ddd-python)
 · [llm-tool-calling-assistant](https://github.com/hasanozkan/llm-tool-calling-assistant)
 · [ai-native-engineering](https://github.com/hasanozkan/ai-native-engineering).
 By [Hasan Özkan](https://github.com/hasanozkan) · [LinkedIn](https://www.linkedin.com/in/hasanozkan/)
