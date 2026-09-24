@@ -1,0 +1,49 @@
+# promtool unit tests for the library's alerts (apps/base/library/prometheusrule.yaml,
+# extracted to library.rules.yaml by scripts/test_alerts.sh). Each fires on its
+# pattern and stays quiet below it.
+rule_files:
+  - library.rules.yaml
+evaluation_interval: 1m
+
+tests:
+  - name: 5xx above 5% for 5m pages; 2% does not
+    interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{http_route="/lending/loans",http_response_status_code="201",http_request_method="POST"}'
+        values: '0+90x20'
+      - series: 'http_server_request_duration_seconds_count{http_route="/lending/loans",http_response_status_code="500",http_request_method="POST"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: LibraryServerErrors
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: LibraryServerErrors
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations: { summary: "10% of library requests fail with 5xx" }
+  - name: 5xx at 2% stays quiet
+    interval: 1m
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{http_response_status_code="200"}'
+        values: '0+98x20'
+      - series: 'http_server_request_duration_seconds_count{http_response_status_code="503"}'
+        values: '0+2x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: LibraryServerErrors
+        exp_alerts: []
+
+  - name: refusals spike per code
+    interval: 1m
+    input_series:
+      - series: 'library_refusals_total{library_code="copy_on_loan"}'
+        values: '0+5x20'
+      - series: 'library_refusals_total{library_code="fees_outstanding"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: LibraryRefusalsSpike
+        exp_alerts:
+          - exp_labels: { severity: warning, library_code: copy_on_loan }
+            exp_annotations: { summary: "75 copy_on_loan refusals in 15 minutes" }

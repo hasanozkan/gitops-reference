@@ -16,6 +16,9 @@ flux install --components-extra=image-reflector-controller,image-automation-cont
 
 sed "s#https://github.com/hasanozkan/gitops-reference#$REPO#" clusters/local/sync.yaml | kubectl apply -f -
 kubectl apply -f clusters/local/image-policy.yaml   # scan + policy: what WOULD deploy
+# The observability stack (Prometheus, Alertmanager, Grafana, Loki, Tempo, Alloy):
+# local only — CI installs just the monitoring CRDs from infrastructure/.
+sed "s#https://github.com/hasanozkan/gitops-reference#$REPO#" clusters/local/observability.yaml | kubectl apply -f -
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   flux create secret git gitops-push --url="$REPO" --username=git --password="$GITHUB_TOKEN"
   kubectl -n flux-system patch gitrepository gitops-reference --type merge \
@@ -25,5 +28,6 @@ fi
 
 flux reconcile source git gitops-reference
 kubectl -n flux-system wait kustomization/infrastructure kustomization/apps --for=condition=Ready --timeout=5m
+kubectl -n flux-system wait kustomization/observability --for=condition=Ready --timeout=15m
 flux get kustomizations
 flux get images policy library || true

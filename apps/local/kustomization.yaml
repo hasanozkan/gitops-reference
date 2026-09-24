@@ -1,6 +1,8 @@
-# Local (k3d): one replica, reachable through k3d's Traefik on localhost:8080.
+# Local (k3d): both apps, reachable through k3d's Traefik on localhost:8080 —
+# /v1 is the assistant, everything else the library.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../base/library
+  - ../base/assistant
   - ingress.yaml

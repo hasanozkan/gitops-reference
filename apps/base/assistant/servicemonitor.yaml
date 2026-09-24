@@ -1,0 +1,16 @@
+# How the assistant is scraped: declared by the app, found by any Prometheus
+# Operator in the cluster. Metrics follow observability/telemetry.yaml in its repository.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: assistant
+  labels:
+    app.kubernetes.io/name: assistant
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: assistant
+  endpoints:
+    - port: http
+      path: /metrics/
+      interval: 15s

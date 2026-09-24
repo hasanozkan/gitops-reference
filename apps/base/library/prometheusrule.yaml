@@ -1,0 +1,34 @@
+# The library's alerts, on its telemetry contract. Unit-tested with promtool
+# (observability/tests/library.test.yaml).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: library
+spec:
+  groups:
+    - name: library
+      rules:
+        - alert: LibraryServerErrors
+          expr: |
+            sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+              / sum(rate(http_server_request_duration_seconds_count[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: page
+          annotations:
+            summary: "{{ $value | humanizePercentage }} of library requests fail with 5xx"
+        - alert: LibrarySlowRoute
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket[5m]))) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "p95 of {{ $labels.http_route }} is {{ $value | humanizeDuration }}"
+        - alert: LibraryRefusalsSpike
+          expr: sum by (library_code) (increase(library_refusals_total[15m])) > 50
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $value | humanize }} {{ $labels.library_code }} refusals in 15 minutes"

@@ -24,6 +24,22 @@ jobs:
           kustomize version
       - run: ./scripts/validate.sh
 
+  # Observability as code, checked without a cluster: dashboards and alerts
+  # may only query series and labels the services' telemetry contracts define;
+  # the assistant's rules mirror its repository; every rule is unit-tested.
+  observability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install promtool
+        run: |
+          curl -sSL https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz \
+            | tar xz --strip-components=1 -C /usr/local/bin prometheus-3.5.0.linux-amd64/promtool
+      - run: pip install pyyaml
+      - run: python3 scripts/check_queries.py
+      - run: python3 scripts/alerts_mirror.py --check
+      - run: ./scripts/test_alerts.sh
+
   # The real thing on a throwaway cluster: Flux reconciles THIS commit, the
   # apps become Ready in dependency order, the service passes a smoke test,
   # and the image policy resolves a tag from the registry.
@@ -41,17 +57,23 @@ jobs:
             | sed "s#https://github.com/hasanozkan/gitops-reference#https://github.com/${{ github.repository }}#" \
             | kubectl apply -f -
           kubectl apply -f clusters/local/image-policy.yaml
-          kubectl -n flux-system wait kustomization/infrastructure kustomization/apps --for=condition=Ready --timeout=5m
+          kubectl -n flux-system wait kustomization/infrastructure kustomization/apps --for=condition=Ready --timeout=8m
           flux get kustomizations
+          kubectl -n library get servicemonitors,prometheusrules
       - name: Smoke test through the Service
         run: |
           kubectl -n library port-forward svc/library 8080:80 >/dev/null 2>&1 &
           sleep 3
           ./scripts/smoke.sh http://localhost:8080
+          kubectl -n library port-forward svc/assistant 8081:80 >/dev/null 2>&1 &
+          sleep 3
+          curl -fsS -X POST localhost:8081/v1/sessions
+          curl -fsS localhost:8080/metrics/ | grep -q library_loans_opened_total && echo "library metrics: ok"
+          curl -fsS localhost:8081/metrics/ | grep -q '^# TYPE' && echo "assistant metrics endpoint: ok"
       - name: Image policy resolves the newest main-<ts>-<sha>
         run: |
-          kubectl -n flux-system wait imagepolicy/library --for=condition=Ready --timeout=3m
-          flux get images policy library
+          kubectl -n flux-system wait imagepolicy/library imagepolicy/assistant --for=condition=Ready --timeout=3m
+          flux get images policy
       - name: Diagnostics
         if: failure()
         run: |

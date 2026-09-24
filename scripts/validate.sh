@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 CRDS='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
 validate() { kubeconform -strict -summary -schema-location default -schema-location "$CRDS" "$@"; }
-for overlay in infrastructure apps/local apps/production; do
+for overlay in infrastructure apps/local apps/production observability; do
   echo "== $overlay"
   kustomize build "$overlay" | validate -
 done

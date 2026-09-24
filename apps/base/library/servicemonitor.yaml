@@ -1,0 +1,16 @@
+# How the library is scraped: declared by the app, found by any Prometheus
+# Operator in the cluster. Metrics follow specs/telemetry.yaml.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: library
+  labels:
+    app.kubernetes.io/name: library
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: library
+  endpoints:
+    - port: http
+      path: /metrics/
+      interval: 15s
