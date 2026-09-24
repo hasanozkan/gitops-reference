@@ -50,6 +50,11 @@ new images now arrive as `chore(image): … -> …` commits in your fork.
 
 ## Observability
 
+<p align="center">
+  <img src="docs/screenshots/grafana-assistant.png" width="49%" alt="Assistant dashboard: tokens, model latency, suspicious proposals, injection flags, tool calls" />
+  <img src="docs/screenshots/grafana-library.png" width="49%" alt="Library dashboard: request rate and p95 by route, loans, refusals, logs from Loki" />
+</p>
+
 `make up` also installs a laptop-sized stack — Prometheus, Alertmanager,
 Grafana, Loki (logs via Alloy) and Tempo (traces) — and `make traffic` gives
 it something to show. `make grafana` opens two dashboards that live in
@@ -68,6 +73,14 @@ telemetry contract (`scripts/check_queries.py` — a dashboard on a renamed
 metric fails the build, verified), the assistant's rules must equal its
 repository's (`scripts/alerts_mirror.py --check`), and every rule is
 unit-tested with `promtool`.
+
+**What running it found.** The first real scrape showed `LibrarySlowRoute`
+firing for `/healthz` at a p95 of 4.75 s. The service was fine; the
+histogram was not: the SDK's default bucket boundaries are sized for
+milliseconds, so every request recorded in seconds landed in the first bucket.
+The advised boundaries now live in the telemetry contracts, and the services'
+tests compare them — p95 reads ~5 ms. Unit tests could not have caught it;
+an alert evaluated on real data did.
 
 ## Layout
 
