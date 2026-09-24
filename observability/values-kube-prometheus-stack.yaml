@@ -3,9 +3,6 @@
 # ServiceMonitors and PrometheusRules in any namespace.
 crds:
   enabled: false            # installed by infrastructure/monitoring-crds.yaml
-# The chart's Kubernetes dashboards would be empty (cluster scraping is off);
-# only this repository's dashboards are loaded.
-defaultDashboardsEnabled: false
 defaultRules:
   create: false
 kubeStateMetrics:
@@ -46,6 +43,9 @@ alertmanager:
     resources:
       requests: {cpu: 10m, memory: 32Mi}
 grafana:
+  # The chart's Kubernetes dashboards would be empty (cluster scraping is off);
+  # only this repository's dashboards are loaded.
+  defaultDashboardsEnabled: false
   # Local demo: anonymous viewer access, no password in Git.
   grafana.ini:
     auth.anonymous:
