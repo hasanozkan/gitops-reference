@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: library
-          image: ghcr.io/hasanozkan/library-sample:main-1790254645-1634019 # {"$imagepolicy": "flux-system:library"}
+          image: ghcr.io/hasanozkan/library-sample:main-1790256311-f482a50 # {"$imagepolicy": "flux-system:library"}
           ports:
             - name: http
               containerPort: 8000
