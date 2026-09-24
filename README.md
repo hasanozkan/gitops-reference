@@ -4,9 +4,10 @@
 ![flux](https://img.shields.io/badge/Flux-v2-5468FF) ![license](https://img.shields.io/badge/license-MIT-green)
 
 A small, complete GitOps setup you can run on a laptop in one command: Flux
-reconciles a service from Git, in dependency order, onto restricted
-workloads — and **a merge to `main` in the application repository becomes a
-deploy through a commit here**.
+reconciles two services from Git, in dependency order, onto restricted
+workloads; image automation picks the newest `main-<ts>-<sha>` build of each;
+and the observability stack is code too — dashboards and alerts checked
+against the services' telemetry contracts.
 
 The service is the library API from
 [spec-driven-ddd-python](https://github.com/hasanozkan/spec-driven-ddd-python),
@@ -42,11 +43,13 @@ flux reconcile kustomization apps                      # ...corrected from Git
 make down
 ```
 
-`make up` deploys and resolves the image policy (`flux get images policy
-library` shows the newest tag) but writes nothing back. To see the full
-loop, fork this repository and run
-`GITOPS_REPO=https://github.com/<you>/gitops-reference GITHUB_TOKEN=<token with contents:write> make up`:
-new images now arrive as `chore(image): … -> …` commits in your fork.
+`make up` deploys and resolves the image policies (`flux get images policy`
+shows the newest tag of each) but writes nothing back; tags in
+`apps/base/*/deployment.yaml` are bumped by commit. The write-back half —
+Flux committing `chore(image): … -> …` itself — is configured in
+[`clusters/local/image-update.yaml`](clusters/local/image-update.yaml) and
+enabled with `GITOPS_REPO=<your fork> GITHUB_TOKEN=<contents:write> make up`,
+but it is **not exercised by CI or by the runs behind this README**.
 
 ## Observability
 
