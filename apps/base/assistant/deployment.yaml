@@ -23,7 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: assistant
-          image: ghcr.io/hasanozkan/llm-assistant:main-1790269953-c15e527 # {"$imagepolicy": "flux-system:assistant"}
+          image: ghcr.io/hasanozkan/llm-assistant:main-1790272022-69c8c11 # {"$imagepolicy": "flux-system:assistant"}
           ports:
             - name: http
               containerPort: 8000
