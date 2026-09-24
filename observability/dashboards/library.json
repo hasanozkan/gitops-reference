@@ -28,7 +28,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(http_server_request_duration_seconds_count[5m]))"
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_route!=\"/healthz\"}[5m]))) or vector(0)"
         }
       ],
       "fieldConfig": {
@@ -54,7 +54,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m]))"
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\", http_route!=\"/healthz\"}[5m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route!=\"/healthz\"}[5m]))"
         }
       ],
       "fieldConfig": {
@@ -80,7 +80,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(library_loans_opened_total[1h]))"
+          "expr": "(sum(increase(library_loans_opened_total[1h]))) or vector(0)"
         }
       ]
     },
@@ -100,7 +100,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(library_late_fees_cents_total[1h])) / 100"
+          "expr": "(sum(increase(library_late_fees_cents_total[1h])) / 100) or vector(0)"
         }
       ],
       "fieldConfig": {
@@ -126,7 +126,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count[5m]))",
+          "expr": "sum by (http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{http_route!=\"/healthz\"}[5m]))",
           "legendFormat": "{{http_route}} {{http_response_status_code}}"
         }
       ],
@@ -153,7 +153,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=\"/healthz\"}[5m])))",
           "legendFormat": "{{http_route}}"
         }
       ],
@@ -227,7 +227,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{namespace=\"library\", app=\"library\"}"
+          "expr": "{namespace=\"library\", app=\"library\"} != \"/healthz\" != \"/metrics\""
         }
       ]
     }

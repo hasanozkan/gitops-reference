@@ -29,7 +29,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(assistant_llm_cost_usd_total[1h]))"
+          "expr": "(sum(increase(assistant_llm_cost_usd_total[1h]))) or vector(0)"
         }
       ],
       "fieldConfig": {
@@ -55,7 +55,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(assistant_proposals_total{assistant_suspicious=\"true\"}[1h]))"
+          "expr": "(sum(increase(assistant_proposals_total{assistant_suspicious=\"true\"}[1h]))) or vector(0)"
         }
       ]
     },
@@ -75,7 +75,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(assistant_injection_flags_total[1h]))"
+          "expr": "(sum(increase(assistant_injection_flags_total[1h]))) or vector(0)"
         }
       ]
     },
@@ -95,7 +95,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(assistant_turns_total{assistant_turn_outcome=~\"call_budget|token_budget\"}[1h]))"
+          "expr": "(sum(increase(assistant_turns_total{assistant_turn_outcome=~\"call_budget|token_budget\"}[1h]))) or vector(0)"
         }
       ]
     },
@@ -241,7 +241,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{namespace=\"library\", app=\"assistant\"}"
+          "expr": "{namespace=\"library\", app=\"assistant\"} != \"/healthz\" != \"/metrics\""
         }
       ]
     }
