@@ -13,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: fluxcd/flux2/action@main
-      - name: Install kubeconform and kustomize
+      - name: Install kubeconform (kustomize ships with the runner)
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin kubeconform
-          curl -sSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- 5.8.1 /usr/local/bin
+          kustomize version
       - run: ./scripts/validate.sh
 
   # The real thing on a throwaway cluster: Flux reconciles THIS commit, the
